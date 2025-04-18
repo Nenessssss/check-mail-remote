@@ -10,27 +10,33 @@ const EMAILJS_TEMPLATE = process.env.EMAILJS_TEMPLATE;
 const EMAILJS_USER = process.env.EMAILJS_USER;
 
 const fetchExpiringTools = async () => {
- const response = await fetch(`${SUPABASE_URL}/rest/v1/6434?select=*&apikey=${SUPABASE_KEY}`, {
-
-  headers: {
-    apikey: SUPABASE_KEY,
-    Authorization: `Bearer ${SUPABASE_KEY}`
-  }
-});
-
+ const fetchExpiringTools = async () => {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/6434?select=*`, {
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+    }
+  });
 
   const data = await response.json();
+  console.log("ODEBRANE DANE:", data);
+
+  // Upewnij się, że to tablica
+  if (!Array.isArray(data)) {
+    console.log("BŁĄD: Odpowiedź z Supabase nie jest tablicą");
+    return [];
+  }
+
   const today = new Date();
 
   return data.filter(item => {
     const [day, month, year] = item.Data.split('-');
     const toolDate = new Date(`20${year}`, month - 1, day);
-
     const diffTime = toolDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays === 90;
   });
-};
+
 
 const sendEmails = async (tools) => {
   for (const tool of tools) {
