@@ -1,24 +1,21 @@
 import fetch from 'node-fetch';
 import emailjs from 'emailjs-com';
-import dotenv from 'dotenv';
-dotenv.config();
+
+// Debug – sprawdź, czy Render widzi klucz
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
+console.log("SUPABASE_KEY:", SUPABASE_KEY);  // <--- TO WYSKOCZY W LOGACH
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const EMAILJS_SERVICE = process.env.EMAILJS_SERVICE;
 const EMAILJS_TEMPLATE = process.env.EMAILJS_TEMPLATE;
 const EMAILJS_USER = process.env.EMAILJS_USER;
-
-// LOGI SPRAWDZAJĄCE
-console.log("SUPABASE_URL:", SUPABASE_URL);
-console.log("SUPABASE_KEY (first 10 chars):", SUPABASE_KEY?.substring(0, 10));
 
 const fetchExpiringTools = async () => {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/6434?select=*`, {
     headers: {
       apikey: SUPABASE_KEY,
       Authorization: `Bearer ${SUPABASE_KEY}`,
-    },
+    }
   });
 
   const data = await response.json();
@@ -31,8 +28,8 @@ const fetchExpiringTools = async () => {
 
   const today = new Date();
 
-  return data.filter((item) => {
-    const [day, month, year] = item.Data.split("-");
+  return data.filter(item => {
+    const [day, month, year] = item.Data.split('-');
     const toolDate = new Date(`20${year}`, month - 1, day);
     const diffTime = toolDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -45,12 +42,12 @@ const sendEmails = async (tools) => {
     const templateParams1 = {
       to_email: tool["Email Technik 1"],
       to_email_2: tool["Email Technik 2"],
-      message: `Hej (6434), twoje ${tool.Nazwa} ${tool.VT} wychodzi z daty za 90 dni. Stockkeeper poinformowany.`,
+      message: `Hej (6434), twoje ${tool.Nazwa} ${tool.VT} wychodzi z daty za 90 dni. Stockkeeper poinformowany.`
     };
 
     const templateParams2 = {
       to_email: tool["Email Stockkeeper"],
-      message: `Hej tu van (6434), nasz ${tool.Nazwa} ${tool.VT} wychodzi z daty za 90 dni. Zamów nam nowe narzędzie. Dziękujemy.`,
+      message: `Hej tu van (6434), nasz ${tool.Nazwa} ${tool.VT} wychodzi z daty za 90 dni. Zamów nam nowe narzędzie. Dziękujemy.`
     };
 
     await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, templateParams1, EMAILJS_USER);
@@ -62,9 +59,9 @@ const main = async () => {
   const toolsToNotify = await fetchExpiringTools();
   if (toolsToNotify.length > 0) {
     await sendEmails(toolsToNotify);
-    console.log("✅ Maile wysłane.");
+    console.log("📧 Maile wysłane.");
   } else {
-    console.log("ℹ️ Brak narzędzi do przypomnienia.");
+    console.log("✅ Brak narzędzi do przypomnienia.");
   }
 };
 
