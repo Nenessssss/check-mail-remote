@@ -1,7 +1,6 @@
 import emailjs from 'emailjs-com';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
-
 dotenv.config();
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -15,7 +14,7 @@ const fetchExpiringTools = async () => {
     headers: {
       apikey: SUPABASE_KEY,
       Authorization: `Bearer ${SUPABASE_KEY}`,
-    }
+    },
   });
 
   const data = await response.json();
@@ -42,12 +41,12 @@ const sendEmails = async (tools) => {
     const templateParams1 = {
       to_email: tool["Email Technik 1"],
       to_email_2: tool["Email Technik 2"],
-      message: `Hej (6434), twoje ${tool.Nazwa} ${tool.VT} wychodzi z daty za 90 dni. Stockkeeper poinformowany.`
+      message: `Hej (6434), twoje ${tool.Nazwa} ${tool.VT} wychodzi z daty za 90 dni. Stockkeeper poinformowany.`,
     };
 
     const templateParams2 = {
       to_email: tool["Email Stockkeeper"],
-      message: `Hej tu van (6434), nasz ${tool.Nazwa} ${tool.VT} wychodzi z daty za 90 dni. Zamów nam nowe narzędzie. Dziękujemy.`
+      message: `Hej tu van (6434), nasz ${tool.Nazwa} ${tool.VT} wychodzi z daty za 90 dni. Zamów nam nowe narzędzie. Dziękujemy.`,
     };
 
     await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, templateParams1, EMAILJS_USER);
@@ -59,9 +58,9 @@ const main = async () => {
   const toolsToNotify = await fetchExpiringTools();
   if (toolsToNotify.length > 0) {
     await sendEmails(toolsToNotify);
-    console.log("📬 Maile wysłane.");
+    console.log("✅ Maile wysłane.");
   } else {
-    console.log("✅ Brak narzędzi do przypomnienia.");
+    console.log("ℹ️ Brak narzędzi do przypomnienia.");
   }
 };
 
