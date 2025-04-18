@@ -1,7 +1,7 @@
-
 import emailjs from 'emailjs-com';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -59,9 +59,9 @@ const main = async () => {
   const toolsToNotify = await fetchExpiringTools();
   if (toolsToNotify.length > 0) {
     await sendEmails(toolsToNotify);
-    console.log("✅ Maile zostały wysłane.");
+    console.log("📬 Maile wysłane.");
   } else {
-    console.log("ℹ️ Brak narzędzi do przypomnienia.");
+    console.log("✅ Brak narzędzi do przypomnienia.");
   }
 };
 
