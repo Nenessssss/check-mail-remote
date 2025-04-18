@@ -11,7 +11,8 @@ const EMAILJS_TEMPLATE = process.env.EMAILJS_TEMPLATE;
 const EMAILJS_USER = process.env.EMAILJS_USER;
 
 const fetchExpiringTools = async () => {
-  const response = await fetch(`https://${SUPABASE_URL}/rest/v1/6434?select=*&apikey=${SUPABASE_KEY}`, {
+ const response = await fetch(`${SUPABASE_URL}/rest/v1/6434?select=*&apikey=${SUPABASE_KEY}`, {
+
   headers: {
     apikey: SUPABASE_KEY,
     Authorization: `Bearer ${SUPABASE_KEY}`
