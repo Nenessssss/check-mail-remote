@@ -1,5 +1,5 @@
-import emailjs from 'emailjs-com';
 import fetch from 'node-fetch';
+import emailjs from 'emailjs-com';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -8,6 +8,10 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const EMAILJS_SERVICE = process.env.EMAILJS_SERVICE;
 const EMAILJS_TEMPLATE = process.env.EMAILJS_TEMPLATE;
 const EMAILJS_USER = process.env.EMAILJS_USER;
+
+// LOGI SPRAWDZAJĄCE
+console.log("SUPABASE_URL:", SUPABASE_URL);
+console.log("SUPABASE_KEY (first 10 chars):", SUPABASE_KEY?.substring(0, 10));
 
 const fetchExpiringTools = async () => {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/6434?select=*`, {
@@ -21,14 +25,14 @@ const fetchExpiringTools = async () => {
   console.log("ODEBRANE DANE:", data);
 
   if (!Array.isArray(data)) {
-    console.log("BŁĄD: Odpowiedź z Supabase nie jest tablicą");
+    console.log("❌ BŁĄD: Odpowiedź z Supabase nie jest tablicą");
     return [];
   }
 
   const today = new Date();
 
-  return data.filter(item => {
-    const [day, month, year] = item.Data.split('-');
+  return data.filter((item) => {
+    const [day, month, year] = item.Data.split("-");
     const toolDate = new Date(`20${year}`, month - 1, day);
     const diffTime = toolDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -65,3 +69,4 @@ const main = async () => {
 };
 
 main();
+
