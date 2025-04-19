@@ -3,7 +3,7 @@ import emailjs from 'emailjs-com';
 
 // Debug – sprawdź, czy Render widzi klucz
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
-console.log("SUPABASE_KEY:", SUPABASE_KEY);  // <--- TO WYSKOCZY W LOGACH
+console.log("SUPABASE_KEY:", SUPABASE_KEY);
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const EMAILJS_SERVICE = process.env.EMAILJS_SERVICE;
@@ -30,10 +30,10 @@ const fetchExpiringTools = async () => {
 
   return data.filter(item => {
     const [day, month, year] = item.Data.split('-');
-    const toolDate = new Date(`20${year}`, month - 1, day);
+    const toolDate = new Date(year, month - 1, day); // ✅ poprawione
     const diffTime = toolDate - today;
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays >= 89 && diffDays <= 91;  // tolerancja ±1 dzień
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays === 90;
   });
 };
 
@@ -66,4 +66,5 @@ const main = async () => {
 };
 
 main();
+
 
