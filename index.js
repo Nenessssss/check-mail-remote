@@ -26,21 +26,8 @@ const fetchExpiringTools = async () => {
     return [];
   }
 
-  const today = new Date();
-
-  return data.filter(item => {
-    if (!item.Data) return false;
-
-    const [day, month, year] = item.Data.split('-');
-    const toolDate = new Date(`${year}-${month}-${day}`);
-
-    const diffTime = toolDate.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    console.log('🔍 Sprawdzam:', item.Nazwa, '→', item.Data, '| Dni:', diffDays);
-
-    return diffDays === 90;
-  });
+  // 🔍 Nie filtrujemy dat – testujemy wszystko
+  return data;
 };
 
 const sendEmails = async (tools) => {
@@ -48,14 +35,15 @@ const sendEmails = async (tools) => {
     const templateParams1 = {
       to_email: tool["Email Technik 1"],
       to_email_2: tool["Email Technik 2"],
-      message: `Hej (6434), twoje ${tool.Nazwa} ${tool.VT} wychodzi z daty za 90 dni. Stockkeeper poinformowany.`
+      message: `🔍 TEST: Narzędzie ${tool.Nazwa} ${tool.VT} z datą ${tool.Data}. Stockkeeper poinformowany.`
     };
 
     const templateParams2 = {
       to_email: tool["Email Stockkeeper"],
-      message: `Hej tu van (6434), nasz ${tool.Nazwa} ${tool.VT} wychodzi z daty za 90 dni. Zamów nam nowe narzędzie. Dziękujemy.`
+      message: `🔍 TEST: Stockkeeper – narzędzie ${tool.Nazwa} ${tool.VT} z datą ${tool.Data}.`
     };
 
+    console.log("📤 Wysyłanie maili dla:", tool.Nazwa);
     await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, templateParams1, EMAILJS_USER);
     await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, templateParams2, EMAILJS_USER);
   }
@@ -66,9 +54,9 @@ const main = async () => {
 
   if (toolsToNotify.length > 0) {
     await sendEmails(toolsToNotify);
-    console.log("📧 Maile wysłane.");
+    console.log("📧 Maile TESTOWE wysłane.");
   } else {
-    console.log("✅ Brak narzędzi do przypomnienia.");
+    console.log("❌ Brak danych nawet w trybie testowym.");
   }
 };
 
