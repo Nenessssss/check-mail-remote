@@ -1,14 +1,14 @@
 import fetch from 'node-fetch';
 import emailjs from 'emailjs-com';
 
-// Debug – sprawdź, czy Render widzi klucz
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
-console.log("SUPABASE_KEY:", SUPABASE_KEY);
-
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const EMAILJS_SERVICE = process.env.EMAILJS_SERVICE;
 const EMAILJS_TEMPLATE = process.env.EMAILJS_TEMPLATE;
 const EMAILJS_USER = process.env.EMAILJS_USER;
+
+console.log("SUPABASE_KEY:", SUPABASE_KEY);
+console.log("SUPABASE_URL:", SUPABASE_URL);
 
 const fetchExpiringTools = async () => {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/6434?select=*`, {
@@ -30,11 +30,14 @@ const fetchExpiringTools = async () => {
 
   return data.filter(item => {
     if (!item.Data) return false;
-    const [day, month, year] = item.Data.split('-');
-    const toolDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 
-    const diffTime = toolDate - today;
+    const [day, month, year] = item.Data.split('-');
+    const toolDate = new Date(`${year}-${month}-${day}`);
+
+    const diffTime = toolDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    console.log('🔍 Sprawdzam:', item.Nazwa, '→', item.Data, '| Dni:', diffDays);
 
     return diffDays === 90;
   });
@@ -60,6 +63,7 @@ const sendEmails = async (tools) => {
 
 const main = async () => {
   const toolsToNotify = await fetchExpiringTools();
+
   if (toolsToNotify.length > 0) {
     await sendEmails(toolsToNotify);
     console.log("📧 Maile wysłane.");
