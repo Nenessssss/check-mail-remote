@@ -32,8 +32,8 @@ const fetchExpiringTools = async () => {
     const [day, month, year] = item.Data.split('-');
     const toolDate = new Date(`20${year}`, month - 1, day);
     const diffTime = toolDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays === 90;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays >= 89 && diffDays <= 91;  // tolerancja ±1 dzień
   });
 };
 
