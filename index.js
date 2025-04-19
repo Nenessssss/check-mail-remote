@@ -29,10 +29,13 @@ const fetchExpiringTools = async () => {
   const today = new Date();
 
   return data.filter(item => {
+    if (!item.Data) return false;
     const [day, month, year] = item.Data.split('-');
-    const toolDate = new Date(year, month - 1, day); // ✅ poprawione
+    const toolDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+
     const diffTime = toolDate - today;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
     return diffDays === 90;
   });
 };
