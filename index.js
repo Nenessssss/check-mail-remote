@@ -1,96 +1,107 @@
-import fetch from 'node-fetch';
+import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+dotenv.config();
 
-// Klucze z Render → ustawione w "Environment"
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_KEY;
-const EMAILJS_SERVICE = process.env.EMAILJS_SERVICE;
-const EMAILJS_TEMPLATE = process.env.EMAILJS_TEMPLATE;
-const EMAILJS_USER = process.env.EMAILJS_USER;
 
-// TEST: wypisz URL i KEY skrócone
-console.log("SUPABASE_URL:", SUPABASE_URL);
-console.log("SUPABASE_KEY (first 10 chars):", SUPABASE_KEY?.slice(0, 10));
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ✅ Funkcja wysyłająca e-mail przez EmailJS API
-const sendEmail = async (templateParams) => {
-  try {
-    const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        service_id: EMAILJS_SERVICE,
-        template_id: EMAILJS_TEMPLATE,
-        user_id: EMAILJS_USER,
-        template_params: templateParams
-      })
-    });
-
-    const result = await response.text();
-    console.log("✅ Wysłano e-mail:", result);
-  } catch (error) {
-    console.error("❌ Błąd przy wysyłce e-maila:", error);
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD
   }
-};
+});
 
-// 📥 Pobierz dane z Supabase z tabeli `formularze`
-const fetchExpiringTools = async () => {
-  const response = await fetch(`${SUPABASE_URL}/rest/v1/formularze?select=*`, {
-    headers: {
-      apikey: SUPABASE_KEY,
-      Authorization: `Bearer ${SUPABASE_KEY}`,
+function formatDate(date) {
+  const [day, month, year] = date.split('-');
+  return new Date(`20${year}`, month - 1, day);
+}
+
+function isDateInNDays(targetDate, n) {
+  const now = new Date();
+  const future = new Date(now);
+  future.setDate(future.getDate() + n);
+
+  return (
+    targetDate.getDate() === future.getDate() &&
+    targetDate.getMonth() === future.getMonth() &&
+    targetDate.getFullYear() === future.getFullYear()
+  );
+}
+
+async function sendEmails(form) {
+  const { name, vt, tech1, tech2, stockkeeper, category } = form;
+
+  const subject = '🔧 Narzędzie wychodzi z daty';
+  const messageToTechs = `Hej (${category}), twoje (${name} + ${vt}) wychodzi z daty za 90 dni. Stockkeeper poinformowany.`;
+  const messageToStock = `Hej tu van (${category}), nasz (${name} + ${vt}) wychodzi z daty za 90 dni. Zamów nam nowe narzędzie. Dziękujemy.`;
+
+  const mails = [];
+
+  if (tech1) {
+    mails.push(transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: tech1,
+      subject,
+      text: messageToTechs
+    }));
+  }
+
+  if (tech2) {
+    mails.push(transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: tech2,
+      subject,
+      text: messageToTechs
+    }));
+  }
+
+  if (stockkeeper) {
+    mails.push(transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: stockkeeper,
+      subject,
+      text: messageToStock
+    }));
+  }
+
+  await Promise.all(mails);
+  console.log(`📧 Maile wysłane dla: ${name}`);
+}
+
+async function main() {
+  const { data, error } = await supabase.from('formularze').select('*');
+  if (error) {
+    console.error('❌ Błąd pobierania:', error);
+    return;
+  }
+
+  const itemsToSend = data.filter(row => {
+    if (!row.date || row.mailed) return false;
+
+    const parsedDate = formatDate(row.date);
+    return isDateInNDays(parsedDate, 90);
+  });
+
+  for (const item of itemsToSend) {
+    try {
+      await sendEmails(item);
+      await supabase
+        .from('formularze')
+        .update({ mailed: true })
+        .eq('id', item.id);
+    } catch (e) {
+      console.error(`❌ Błąd wysyłki maila dla ${item.name}`, e.message);
     }
-  });
-
-  const data = await response.json();
-  console.log("ODEBRANE DANE:", data);
-
-  const today = new Date();
-  const toolsToNotify = data.filter(item => {
-    if (!item.date) return false;
-    const [day, month, year] = item.date.split('-');
-    const toolDate = new Date(`${year}-${month}-${day}`);
-    const diffTime = toolDate - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays === 90;
-  });
-
-  return toolsToNotify;
-};
-
-// 📧 Wyślij e-maile do Techników i Stockkeepera
-const sendEmails = async (tools) => {
-  for (const tool of tools) {
-    const category = tool.category || "6434";
-
-    const templateParams1 = {
-      to_email: tool.tech1,
-      to_email_2: tool.tech2,
-      message: `Hej (${category}), twoje ${tool.name} ${tool.vt} wychodzi z daty za 90 dni. Stockkeeper poinformowany.`
-    };
-
-    const templateParams2 = {
-      to_email: tool.stockkeeper,
-      message: `Hej tu van (${category}), nasz ${tool.name} ${tool.vt} wychodzi z daty za 90 dni. Zamów nam nowe narzędzie. Dziękujemy.`
-    };
-
-    await sendEmail(templateParams1);
-    await sendEmail(templateParams2);
   }
-};
 
-// 🧠 Główna funkcja
-const main = async () => {
-  const toolsToNotify = await fetchExpiringTools();
-  if (toolsToNotify.length > 0) {
-    await sendEmails(toolsToNotify);
-    console.log("📧 Maile wysłane.");
-  } else {
-    console.log("✅ Brak narzędzi do przypomnienia.");
+  if (itemsToSend.length === 0) {
+    console.log('✅ Brak narzędzi do przypomnienia.');
   }
-};
+}
 
 main();
-
-

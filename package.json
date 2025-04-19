@@ -1,15 +1,8 @@
-
 {
-  "name": "check-mail-remote",
-  "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
   "dependencies": {
-    "dotenv": "^16.3.1",
-    "emailjs-com": "^3.2.0",
-    "node-fetch": "^2.6.7"
+    "@supabase/supabase-js": "^2.39.6",
+    "nodemailer": "^6.9.4",
+    "dotenv": "^16.3.1"
   }
 }
