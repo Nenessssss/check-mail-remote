@@ -15,9 +15,15 @@ const parseDate = (str) => {
   }
 };
 
-// Porównanie dwóch dat jako obiektów Date
+// Porównanie dwóch dat tylko po dniu, miesiącu i roku
 const isSameDate = (a, b) => {
-  return a && b && a.getTime() === b.getTime();
+  return (
+    a &&
+    b &&
+    a.getDate() === b.getDate() &&
+    a.getMonth() === b.getMonth() &&
+    a.getFullYear() === b.getFullYear()
+  );
 };
 
 // Oblicz datę +90 dni
@@ -40,7 +46,7 @@ if (error) {
 const matching = data.filter((item) => {
   const parsed = parseDate(item.date);
   const match = isSameDate(parsed, targetDate);
-  console.log(`📅 Sprawdzam: ${item.date} ➜ ${parsed?.toDateString()} ➜ Match: ${match}`);
+  console.log(`📅 Sprawdzam: ${item.date} ➜ ${parsed?.toDateString() || 'Invalid'} ➜ Target: ${targetDate.toDateString()} ➜ Match: ${match}`);
   return match;
 });
 
@@ -84,3 +90,4 @@ for (const tool of matching) {
     console.error('❌ Błąd wysyłki dla:', tool.name, err);
   }
 }
+
